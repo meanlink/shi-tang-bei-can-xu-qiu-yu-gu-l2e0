@@ -4,7 +4,7 @@ from src.config.database import get_db
 from src.models import Job
 from src.schemas.job import JobInput
 from src.middlewares.auth import current_user, can_write, admin_only
-from src.services import jobs
+from src.services import jobs, ledger
 from src.services.audit import record
 from src.utils.serialization import job_dict
 router=APIRouter(prefix='/jobs')
@@ -22,8 +22,5 @@ def detail(id:int,db=Depends(get_db),u=Depends(current_user)):
     return job_dict(j)
 @router.post('/{id}/approve')
 def approve(id:int,db=Depends(get_db),u=Depends(admin_only)):
-    j=db.get(Job,id)
-    if not j: raise HTTPException(404,'分析任务不存在')
-    if j.status!='completed':raise HTTPException(409,'仅已完成结果可以批准')
-    j.approved=True; record(db,u.email,'job.approve',{'id':id}); db.commit()
+    j=ledger.approve(db,id,u.email)
     return job_dict(j)

@@ -4,8 +4,8 @@ from src.models import Job, Report, Delivery
 from src.config.settings import ARTIFACT_DIR
 def create(db, data):
     j=db.get(Job,data.job_id)
-    if not j or j.status!='completed' or not j.approved:
-        raise HTTPException(409,'请先选择已完成且获批准的分析结果')
+    if not j or j.status!='completed' or not j.approved or j.superseded:
+        raise HTTPException(409,'仅当前生效的批准方案可新建分发；被替换方案的归档简报保留在收件箱')
     r=Report(name=data.name, job_id=j.id, destination=data.destination, interval_seconds=data.interval_seconds, next_run=time.time()+data.delay_seconds, enabled=True)
     db.add(r); db.flush()
     return r
